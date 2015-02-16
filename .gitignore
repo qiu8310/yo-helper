@@ -1,0 +1,14 @@
+.project
+.settings
+.idea
+*~
+*.diff
+*.patch
+/*.html
+.DS_Store
+.bower.json
+.sizecache.json
+npm-debug.log
+
+/bower_components
+/node_modules
