@@ -175,11 +175,13 @@ module.exports = {
           return false;
         }
 
-        if (target !== file) {
-          this.template(file, target);
-        } else {
-          this.copy(file, file);
-        }
+        //if (target !== file) {
+        //  this.template(file, target);
+        //} else {
+        //  this.copy(file, file);
+        //}
+        
+        this[target !== file ? 'template' : 'copy'](file, target.replace(/^_/, ''));
 
       }.bind(this));
     };
