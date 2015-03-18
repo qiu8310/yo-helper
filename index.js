@@ -1,12 +1,14 @@
 /* jshint -W106 */
 
 var npmName = require('npm-name'),
+  npmLatest = require('npm-latest'),
   mkdirpSync = require('mkdirp').sync,
   github = require('github'),
   yosay = require('yosay'),
   chalk = require('chalk'),
   _ = require('lodash'),
 
+  util = require('util'),
   fs = require('fs'),
   url = require('url'),
   path = require('path');
@@ -20,9 +22,12 @@ var proxy = (function() {
 })();
 
 
-var generatorName = process.argv[2];
+var generatorName = process.argv[2],
+  nameCase = 'camel';
 
-
+function getRealNameCase(temp) {
+  return temp && ['camel', 'kebab', 'snake'].indexOf(temp) >= 0 ? temp : nameCase;
+}
 
 
 
@@ -44,10 +49,10 @@ function getGithubUser (username, cb) {
   });
 }
 
-function slug (str) {
-  return str.replace(/[^\w]+(\w)?/g, function(m) {
-    return m[1] ? m[1].toUpperCase() : '';
-  })
+// nameStyle: camel, kebab, snake
+function slug (str, nameCase) {
+  nameCase = getRealNameCase(nameCase);
+  return _[nameCase + 'Case'](str);
 }
 
 function walk (dir) {
@@ -68,6 +73,8 @@ function walk (dir) {
 
 module.exports = {
 
+  normalize: slug,
+
 
   welcome: function(name) {
     return function() {
@@ -78,6 +85,9 @@ module.exports = {
   askForModuleName: function(cb) {
     return function() {
       var done = this.async();
+      nameCase = getRealNameCase(this.options['name-case']);
+
+
       this.prompt([{
         name: 'moduleName',
         message: 'Module Name:',
@@ -151,6 +161,63 @@ module.exports = {
     };
   },
 
+  askForDependencies: function(dependencies, cb) {
+
+    dependencies = dependencies || [];
+
+    return function() {
+      var done = this.async(),
+        result = {},
+        end = function() {
+          var str = [];
+          _.each(result, function(version, name) {
+            str.push(util.format('\n    "%s": "%s"', name, version));
+          });
+          cb.call(this, result, str.join(',').replace('\n', ''));
+          done();
+        }.bind(this);
+
+      var prompts = [{
+        type: 'checkbox',
+        name: 'dependencies',
+        message: 'Which dependencies would you like to include?',
+        choices: []
+      }];
+
+      if (dependencies.length === 0) { end(); }
+
+      dependencies.forEach(function (pkg) {
+        prompts[0].choices.push({
+          value: pkg.name,
+          name: util.format('%s (%s)', pkg.name, pkg.description || 'No description'),
+          checked: ('checked' in pkg) ? pkg.checked : true
+        });
+      });
+
+      this.prompt(prompts, function(props) {
+        dependencies.forEach(function (dep) {
+          if (props.dependencies.indexOf(dep.name) !== -1) {
+            result[dep.name] = 'latest';
+          }
+        }.bind(this));
+
+
+        // get latest version of dependencies
+        var count = Object.keys(result).length;
+        if (count === 0) { end(); }
+        for (var packageName in result) {
+          npmLatest(packageName, {timeout: 3000}, function (err, res) {
+            if (!err && res.name && res.version) {
+              result[res.name] = res.version;
+            }
+            if (!--count) { end(); }
+          }.bind(this));
+        }
+      }.bind(this));
+
+    };
+  },
+
   writing: function(process) {
     return function() {
       var tplDir = this.sourceRoot(),
@@ -163,25 +230,26 @@ module.exports = {
 
         var dir = path.dirname(file);
         var base = path.basename(file);
+        var normalFile = path.join(dir, base.replace(/^_/, ''));
+
+        if (dir === '_ignore') { return false; }
 
         if (dir !== '.' && !dirCreateMap[dir]) {
           dirCreateMap[dir] = true;
           mkdirpSync(path.join(distDir, dir));
         }
 
-        var target = file.replace(/\._tpl$/, '');  // 去掉 ._tpl 的后缀
+        var target = normalFile.replace(/\._tpl$/, '');  // 去掉 ._tpl 的后缀
 
         if (process && false === process.call(this, file, target)) {
           return false;
         }
 
-        //if (target !== file) {
-        //  this.template(file, target);
-        //} else {
-        //  this.copy(file, file);
-        //}
-        
-        this[target !== file ? 'template' : 'copy'](file, target.replace(/^_/, ''));
+        if (target !== normalFile) {
+          this.template(file, target);
+        } else {
+          this.copy(file, target);
+        }
 
       }.bind(this));
     };

@@ -116,6 +116,29 @@ module.exports = yeoman.generators.Base.extend({
 
 @return `function`
 
+
+### yeHelper.askForDependencies(dependencies, callback)
+
+@params dependencies `array`, example:
+
+```
+[
+  {
+    name: 'lodash',
+    description: 'A utility library'
+  },
+  {
+    name: 'q',
+    description: 'A library for promises',
+    checked: false
+  },
+  {
+    name: 'debug'
+  }
+]
+```
+
+
 #### Github user example
 
 ```js
