@@ -48,7 +48,7 @@ module.exports = yeoman.generators.Base.extend({
       }];
 
       this.prompt(prompts, function(answers) {
-        this.answers = answers;
+        this.props = props;
         done();
       }.bind(this));
     }
@@ -67,6 +67,17 @@ module.exports = yeoman.generators.Base.extend({
 
 
 ```
+
+### yoHelper.normalize(str, \[nameCase])
+
+转换字符串为指定的命名风格，有如下三种：
+
+* camel：驼峰式，默认的风格，如 nodePlugin, yoHelper
+* kebab：中划线式，如 node-plugin, yo-helper
+* snake：下划线式，如 node_plugin, yo_helper
+
+在使用 `yo` 的时候，可以带上参数 `--name-case=snake` 来指定你需要设置的命名风格
+
 
 ### yoHelper.welcome(generatorName)
 
@@ -94,6 +105,8 @@ module.exports = yeoman.generators.Base.extend({
 
 此函数会自动把 template 目录下的所有文件移动到用户当前目录下：
 
+* 如果文件前缀含有 `_`，则自动会去掉
+* 如果文件在 `src` 或 `test` 目录中，里面的文件的命名风格会自动转换成 `--name-case` 指定的风格，或使用默认的 `camel` 风格
 * 如果文件的后缀名是 `._tpl` 的话，则会用 yo 的 `template` 方法，替换文件中的变量，并在生成新文件的时候去掉 `._tpl` 的后缀；
 * 如果文件的后缀名不是 `._tpl` 的话，则直接用 yo 的 `copy` 方法，把文件移动到目标文件夹，不做其它任何处理；
 * 如果参数 `process` 存在，并且其结果返回 `false` 的话，则不会进行上面两步的处理，直接退出
@@ -137,6 +150,9 @@ module.exports = yeoman.generators.Base.extend({
   }
 ]
 ```
+
+@params callback `function`,  callback 的参数有两个，一个 `{pkgName: pkgVersion, ...}`， 
+第二个是可以直接应用到 `package.json` 文件中的 dependencies 字符串
 
 
 #### Github user example

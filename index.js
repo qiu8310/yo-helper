@@ -229,8 +229,7 @@ module.exports = {
         file = file.replace(tplDir + path.sep, '');
 
         var dir = path.dirname(file);
-        var base = path.basename(file);
-        var normalFile = path.join(dir, base.replace(/^_/, ''));
+        var base = path.basename(file).replace(/^_/, '');
 
         if (dir === '_ignore') { return false; }
 
@@ -239,6 +238,17 @@ module.exports = {
           mkdirpSync(path.join(distDir, dir));
         }
 
+        // 修改文件命名风格
+        if (_.contains(['test', 'src', 'example'], dir)) {
+          base = base.split('.');
+          if (this.slugname) {
+            base[0] = base[0].replace('slugname', this.slugname);
+          }
+          base[0] = slug(base[0]);
+          base = base.join('.');
+        }
+
+        var normalFile = path.join(dir, base);
         var target = normalFile.replace(/\._tpl$/, '');  // 去掉 ._tpl 的后缀
 
         if (process && false === process.call(this, file, target)) {
