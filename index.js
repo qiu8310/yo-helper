@@ -86,7 +86,7 @@ module.exports = {
     return function() {
       var done = this.async();
       nameCase = getRealNameCase(this.options['name-case']);
-
+      var moduleName;
 
       this.prompt([{
         name: 'moduleName',
@@ -99,7 +99,8 @@ module.exports = {
         default: true,
         when: function(answers) {
           var done = this.async();
-          npmName(slug(answers.moduleName), function (err, available) {
+          moduleName = answers.moduleName.indexOf('.') > 0 ? answers.moduleName : slug(answers.moduleName);
+          npmName(moduleName, function (err, available) {
             if (available || err) {
               done(false);
               return ;
@@ -111,7 +112,7 @@ module.exports = {
         if (anwsers.moduleNameConfirm) {
           return this.prompting.askForModuleName.call(this);
         }
-        cb.call(this, {moduleName: slug(anwsers.moduleName)});
+        cb.call(this, {moduleName: moduleName});
         done();
       }.bind(this));
     };
@@ -241,10 +242,12 @@ module.exports = {
         // 修改文件命名风格
         if (_.contains(['test', 'src', 'example'], dir)) {
           base = base.split('.');
-          if (this.slugname) {
-            base[0] = base[0].replace('slugname', this.slugname);
+          if (this.slugfile) {
+            base[0] = base[0].replace(/slugname|slugfile/, this.slugfile);
+          } else {
+            base[0] = slug(base[0]);
           }
-          base[0] = slug(base[0]);
+
           base = base.join('.');
         }
 
