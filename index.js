@@ -23,7 +23,7 @@ var proxy = (function() {
 
 
 var generatorName = process.argv[2],
-  nameCase = 'camel';
+  nameCase = 'kebab';
 
 function getRealNameCase(temp) {
   return temp && ['camel', 'kebab', 'snake'].indexOf(temp) >= 0 ? temp : nameCase;
@@ -85,7 +85,7 @@ module.exports = {
   askForModuleName: function(cb) {
     return function() {
       var done = this.async();
-      nameCase = getRealNameCase(this.options['name-case']);
+      nameCase = getRealNameCase(this.nameCase || this.options['name-case']);
       var moduleName;
 
       this.prompt([{
@@ -244,9 +244,8 @@ module.exports = {
           base = base.split('.');
           if (this.slugfile) {
             base[0] = base[0].replace(/slugname|slugfile/, this.slugfile);
-          } else {
-            base[0] = slug(base[0]);
           }
+          base[0] = slug(base[0]);
 
           base = base.join('.');
         }
