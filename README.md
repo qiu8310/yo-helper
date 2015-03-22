@@ -13,16 +13,17 @@
 var yeoman = require('yeoman-generator');
 var yoHelper = require('yo-helper');
 
+var moduleName;
 module.exports = yeoman.generators.Base.extend({
   prompting: {
     welcome: yoHelper.welcome(),
 
     askForModuleName: yoHelper.askForModuleName(function(data) {
-      this.moduleName = data.moduleName;
+      moduleName = this.moduleName = data.moduleName;
     }),
 
-    askForGithubUser: yoHelper.askForGithubUser(function(data) {
-      this.githubUser = data;
+    askForUserData: yoHelper.askForUserData(moduleName, function(data) {
+      this.user = data;
     }),
 
     askForModuleInfo: function() {
@@ -68,7 +69,7 @@ module.exports = yeoman.generators.Base.extend({
 
 ```
 
-### yoHelper.normalize(str, \[nameCase])
+### normalize(str, \[nameCase])
 
 转换字符串为指定的命名风格，有如下三种：
 
@@ -79,7 +80,7 @@ module.exports = yeoman.generators.Base.extend({
 在使用 `yo` 的时候，可以带上参数 `--name-case=snake` 来指定你需要设置的命名风格
 
 
-### yoHelper.welcome(generatorName)
+### welcome(generatorName)
 
 @params generatorName `string` optional
 
@@ -99,7 +100,7 @@ module.exports = yeoman.generators.Base.extend({
  ´   `  |° ´ Y ` 
 ```
 
-### yoHelper.writing(process)
+### writing(process)
 
 @params process `function` optional 处理程序
 
@@ -113,15 +114,15 @@ module.exports = yeoman.generators.Base.extend({
 
 
 
-### yoHelper.askForModuleName(callback)
+### askForModuleName(callback)
 
-@params callback `function` 回调函数，其参数是 `{ moduleName: [user input] }`
+@params callback `function` 回调函数，其参数是 `{ moduleName: [string], pkgName: [string] }`
 
 @return `function`
 
-提示用户输入项目名称，如果名称已经存在，会提醒用户是否重新输入
+提示用户输入项目名称，如果名称已经存在，会提醒用户是否输入一个新的 NPM Package Name
 
-### yoHelper.askForGithubUser(callback, opts)
+### askForGithubUser(callback, opts)
 
 @params callback `function` 回调函数，其参数是 github api 返回
 
@@ -129,8 +130,23 @@ module.exports = yeoman.generators.Base.extend({
 
 @return `function`
 
+### askForUserData(callback, opts)
 
-### yeHelper.askForDependencies(dependencies, callback)
+依赖于 `askForModuleName`，也就是说必须要执行函数 `askForModuleName`
+
+此函数支持没有 github 帐号的用户，让他们输入一些额外的信息，包含了 `askForGithubUser` 功能，它的 `callback` 返回的数据格式为：
+
+```js
+{
+  name: {string},
+  email: {string},
+  project_url: {string},
+  issue_url: {string},
+  github: {object}  // all data that askForGithubUser return
+}
+```
+
+### askForDependencies(dependencies, callback)
 
 @params dependencies `array`, example:
 
@@ -180,7 +196,6 @@ module.exports = yeoman.generators.Base.extend({
     company: null,
     blog: null,
     location: null,
-    email: 'zhongleiqiu@gmail.com',
     hireable: false,
     bio: null,
     public_repos: 33,
@@ -188,6 +203,6 @@ module.exports = yeoman.generators.Base.extend({
     followers: 2,
     following: 18,
     created_at: '2011-10-01T11:20:19Z',
-    updated_at: '2015-02-15T02:56:27Z',
+    updated_at: '2015-02-15T02:56:27Z'
 }
 ```

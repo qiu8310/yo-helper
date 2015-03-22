@@ -29,8 +29,6 @@ function getRealNameCase(temp) {
   return temp && ['camel', 'kebab', 'snake'].indexOf(temp) >= 0 ? temp : nameCase;
 }
 
-
-
 function getGithubUser (username, cb) {
   var githubOpts = { version: '3.0.0' };
   if (proxy) {
@@ -71,10 +69,121 @@ function walk (dir) {
 }
 
 
-module.exports = {
+function recommendForPkgName(old) {
+  if (!(/^(.*?)(.)js$/.test(old))) {
+    return old + '.js';
+  } else {
+    var sep = nameCase === 'kebab' ? '-' : '_';
+    return RegExp.$1 + (RegExp.$2 === '.' ? sep : '.') + 'js';
+  }
+}
+
+function askForPkgName(moduleName, cb) {
+  var pkgName;
+  this.prompt([{
+    name: 'pkgName',
+    message: 'NPM Package Name:',
+    default: recommendForPkgName(moduleName)
+  }, {
+    type: 'confirm',
+    name: 'pkgNameConfirm',
+    message: 'The npm package name above already exists on npm, choose another name for npm package?',
+    default: true,
+    when: function(answers) {
+      var done = this.async();
+      pkgName = answers.pkgName.indexOf('.') > 0 ? answers.pkgName : slug(answers.pkgName);
+      npmName(pkgName, function (err, available) {
+        if (available || err) {
+          done(false);
+          return ;
+        }
+        done(true);
+      }.bind(this));
+    }
+  }], function(anwsers) {
+    if (anwsers.pkgNameConfirm) {
+      return askForPkgName.call(this, pkgName, cb);
+    }
+    cb.call(this, pkgName);
+  }.bind(this));
+}
+
+function _askForUserData(githubUser, cb) {
+  var prompts = [];
+  githubUser = githubUser || {};
+
+  if (!githubUser.name) {
+    prompts.push({
+      name: 'name',
+      message: 'Your username',
+      default: 'someone'
+    });
+  }
+  if (!githubUser.email) {
+    prompts.push({
+      name: 'email',
+      message: 'Your email',
+      default: 'someone@where'
+    });
+  }
+  if (!githubUser.html_url) {
+    prompts.push({
+      name: 'project_url',
+      message: 'Your project home url',
+      default: 'http://project.come'
+    }, {
+      name: 'issue_url',
+      message: 'Your project issue url',
+      default: 'http://project.com/issue'
+    });
+  }
+
+  if (!prompts.length) {
+    cb({});
+  } else {
+    this.prompt(prompts, function(props) {
+      cb(props);
+    }.bind(this));
+  }
+}
+
+function _askForGithubUser(cb) {
+  var githubUser = null;
+
+  this.prompt([{
+    name: 'username',
+    message: 'Your username on GitHub:',
+    default: 'someone'
+  }, {
+    type: 'confirm',
+    name: 'usernameConfirm',
+    message: 'The name above not exists on github, choose another?',
+    default: true,
+    when: function(answers) {
+      var done = this.async();
+      getGithubUser(answers.username, function(err, data) {
+        if (err) {
+          done(true);
+        } else {
+          githubUser = data;
+          done(false);
+        }
+      }.bind(this));
+    }
+  }], function(anwsers) {
+    if (anwsers.usernameConfirm) {
+      return _askForGithubUser.call(this, cb);
+    }
+
+    cb.call(this, githubUser);
+  }.bind(this));
+}
+
+var moduleName;
+
+var EXP = {
 
   normalize: slug,
-
 
   welcome: function(name) {
     return function() {
@@ -86,7 +195,11 @@ module.exports = {
     return function() {
       var done = this.async();
       nameCase = getRealNameCase(this.nameCase || this.options['name-case']);
-      var moduleName;
+      var over = function(data) {
+          cb.call(this, data);
+          console.log(chalk.cyan(JSON.stringify(data)));
+          done();
+        };
 
       this.prompt([{
         name: 'moduleName',
@@ -95,7 +208,7 @@ module.exports = {
       }, {
         type: 'confirm',
         name: 'moduleNameConfirm',
-        message: 'The module name above already exists on npm, choose another?',
+        message: 'The module name above already exists on npm, choose another name for npm package?',
         default: true,
         when: function(answers) {
           var done = this.async();
@@ -110,10 +223,14 @@ module.exports = {
         }
       }], function(anwsers) {
         if (anwsers.moduleNameConfirm) {
-          return this.prompting.askForModuleName.call(this);
+          askForPkgName.call(this, moduleName, function(pkgName) {
+            over.call(this, {moduleName: moduleName, pkgName: pkgName});
+          });
+          //return this.prompting.askForModuleName.call(this);
+        } else {
+          over.call(this, {moduleName: moduleName, pkgName: moduleName});
         }
-        cb.call(this, {moduleName: moduleName});
-        done();
+
       }.bind(this));
     };
   },
@@ -124,41 +241,39 @@ module.exports = {
 
     return function() {
       var done = this.async();
-      var githubUser = null;
 
-      this.prompt([{
-        name: 'username',
-        message: 'Your username on GitHub:',
-        default: 'someone'
-      }, {
-        type: 'confirm',
-        name: 'usernameConfirm',
-        message: 'The name above not exists on github, choose another?',
-        default: true,
-        when: function(answers) {
-          var done = this.async();
-          getGithubUser(answers.username, function(err, data) {
-            if (err) {
-              done(true);
-            } else {
-              githubUser = data;
-              done(false);
-            }
-          }.bind(this));
-        }
-      }], function(anwsers) {
-        if (anwsers.usernameConfirm) {
-          return this.prompting.askForGithubUser.call(this);
-        }
-
-        if (!githubUser && opts.exitOnEmptyUser) {
-          console.log(chalk.red('Your github user is empty, set `exitOnEmptyUser` to `false` to ignore this'));
+      _askForGithubUser.call(this, function(data) {
+        if (!data && opts.exitOnEmptyUser) {
+          console.log(chalk.red('Your github user is empty'));
           process.exit();
         }
 
-        cb.call(this, githubUser);
+        cb.call(this, data);
         done();
-      }.bind(this));
+      });
+    };
+  },
+
+  askForUserData: function(cb) {
+    return function() {
+      var done = this.async(),
+        modName = this.moduleName || this.slugname || moduleName,
+        over = function(githubUser, props) {
+          var data = {github: githubUser};
+          data.name = props.name || githubUser.name;
+          data.email = props.email || githubUser.email;
+          data.project_url = props.project_url || githubUser.html_url + '/' + modName;
+          data.issue_url = props.issue_url || githubUser.html_url + '/' + modName + '/issues';
+          cb.call(this, data);
+          done();
+        };
+
+      _askForGithubUser.call(this, function(githubUser) {
+        _askForUserData.call(this, githubUser, function(props) {
+          over.call(this, githubUser, props);
+        });
+
+      });
     };
   },
 
@@ -268,3 +383,5 @@ module.exports = {
   }
 
 };
+
+module.exports = EXP;
