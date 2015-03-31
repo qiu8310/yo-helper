@@ -1,4 +1,11 @@
 
+0.1.2 / 2015-03-31
+==================
+
+  * update npm-lateast package
+  * cache username and email for next use
+
+
 0.1.1 / 2015-03-30
 ==================
 

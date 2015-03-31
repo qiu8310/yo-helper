@@ -116,14 +116,16 @@ function _askForUserData(githubUser, cb) {
     prompts.push({
       name: 'name',
       message: 'Your username',
-      default: 'someone'
+      default: 'someone',
+      store: true
     });
   }
   if (!githubUser.email) {
     prompts.push({
       name: 'email',
       message: 'Your email',
-      default: 'someone@where'
+      default: 'someone@where',
+      store: true
     });
   }
   if (!githubUser.html_url) {
@@ -153,7 +155,8 @@ function _askForGithubUser(cb) {
   this.prompt([{
     name: 'username',
     message: 'Your username on GitHub:',
-    default: 'someone'
+    default: 'someone',
+    store: true
   }, {
     type: 'confirm',
     name: 'usernameConfirm',

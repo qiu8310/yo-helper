@@ -1,6 +1,6 @@
 {
   "name": "yo-helper",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "yeoman generator helper",
   "main": "index.js",
   "scripts": {
@@ -29,7 +29,7 @@
     "lodash": "^3.5.0",
     "mkdirp": "^0.5.0",
     "npm-name": "^1.0.3",
-    "npm-latest": "git://github.com/qiu8310/npm-latest.git#0.2.1",
+    "npm-latest": "git://github.com/qiu8310/npm-latest.git#0.2.2",
     "yosay": "^1.0.2"
   }
 }
