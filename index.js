@@ -269,7 +269,7 @@ var EXP = {
           data.issue_url = props.issue_url || githubUser.html_url + '/' + modName + '/issues';
           cb.call(this, data);
           done();
-        };
+        }.bind(this);
 
       _askForGithubUser.call(this, function(githubUser) {
         _askForUserData.call(this, githubUser, function(props) {
