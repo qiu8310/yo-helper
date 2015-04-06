@@ -1,4 +1,11 @@
 
+0.1.4 / 2015-04-06
+==================
+
+  * Update npm-latest to 1.0.0
+  * add release and unrelease script
+
+
 0.1.3 / 2015-04-05
 ==================
 
