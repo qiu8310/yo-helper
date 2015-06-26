@@ -215,7 +215,7 @@ var EXP = {
         default: true,
         when: function(answers) {
           var done = this.async();
-          moduleName = answers.moduleName.indexOf('.') > 0 ? answers.moduleName : slug(answers.moduleName);
+          moduleName = /(^-|\.|-$)/.test(answers.moduleName) ? answers.moduleName : slug(answers.moduleName);
           npmName(moduleName, function (err, available) {
             if (available || err) {
               done(false);
