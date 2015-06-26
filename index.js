@@ -91,7 +91,7 @@ function askForPkgName(moduleName, cb) {
     default: true,
     when: function(answers) {
       var done = this.async();
-      pkgName = answers.pkgName.indexOf('.') > 0 ? answers.pkgName : slug(answers.pkgName);
+      pkgName = /(^-|\.|-$)/.test(answers.moduleName) ? answers.pkgName : slug(answers.pkgName);
       npmName(pkgName, function (err, available) {
         if (available || err) {
           done(false);

@@ -1,6 +1,6 @@
 {
   "name": "yo-helper",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "yeoman generator helper",
   "main": "index.js",
   "scripts": {
